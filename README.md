@@ -1,2 +1,2 @@
 # Anjali-Chauhan
-R Data Analysis Project – Data Cleaning, Preprocessing and Exploratory Analysis
+Chemical Research Enthusiast | Biosensors & Formulation Development | Computational & Data-Driven Research | R • Python 
