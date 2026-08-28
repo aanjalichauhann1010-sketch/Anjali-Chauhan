@@ -1,0 +1,373 @@
+install.packages("RWeka")
+library(RWeka)
+install.packages("farff")
+library(farff)
+library(farff)
+library(farff)
+ckd <- readARFF("chronic_kidney_disease.arff")
+problems(ckd)
+dim(ckd)
+head(ckd)
+str(ckd)
+summary(ckd)
+colSums(is.na(ckd))
+missing_percent <- colSums(is.na(ckd)) / nrow(ckd) * 100
+round(missing_percent, 2)
+missing_table <- data.frame(
+Variable = names(ckd),
+Missing = colSums(is.na(ckd)),
+Percentage = round(missing_percent, 2)
+)
+missing_table
+ckd_clean <- ckd
+ckd_clean <- ckd_clean[!is.na(ckd_clean$class), ]
+dim(ckd_clean)
+colSums(is.na(ckd_clean))
+dim(ckd_clean)
+colSums(is.na(ckd_clean))
+sum(duplicated(ckd))
+ckd$age <- as.numeric(ckd$age)
+ckd$blood_pressure <- as.numeric(ckd$blood_pressure)
+ckd$age <- as.numeric(as.character(ckd$age))
+ckd$bp <- as.numeric(as.character(ckd$bp))
+str(ckd$age)
+str(ckd$bp)
+# Numerical variables
+numeric_vars <- c(
+"age", "bp", "sg", "al", "su",
+"bgr", "bu", "sc", "sod", "pot",
+"hemo", "pcv", "wbcc", "rbcc"
+)
+# Convert to numeric
+for (var in numeric_vars) {
+ckd_clean[[var]] <- as.numeric(as.character(ckd_clean[[var]]))
+}
+# Check the result
+str(ckd_clean[numeric_vars])
+# Categorical variables
+categorical_vars <- c(
+"rbc", "pc", "pcc", "ba",
+"htn", "dm", "cad", "appet",
+"pe", "ane", "class"
+)
+# Convert categorical variables to factors
+ckd_clean[categorical_vars] <-
+lapply(ckd_clean[categorical_vars], factor)
+# Check structure
+str(ckd_clean)
+colSums(is.na(ckd_clean))
+missing_percent <- round(
+colSums(is.na(ckd_clean)) / nrow(ckd_clean) * 100,
+2
+)
+missing_table <- data.frame(
+Variable = names(missing_percent),
+Missing_Count = colSums(is.na(ckd_clean)),
+Missing_Percent = missing_percent
+)
+missing_table
+for (var in numeric_vars) {
+ckd_clean[[var]][is.na(ckd_clean[[var]])] <-
+median(ckd_clean[[var]], na.rm = TRUE)
+}
+colSums(is.na(ckd_clean[numeric_vars]))
+get_mode <- function(x) {
+ux <- unique(x[!is.na(x)])
+ux[which.max(tabulate(match(x, ux)))]
+}
+for (var in categorical_vars) {
+if (var != "class") {
+mode_value <- get_mode(ckd_clean[[var]])
+ckd_clean[[var]][is.na(ckd_clean[[var]])] <-
+mode_value
+}
+}
+colSums(is.na(ckd_clean))
+dim(ckd_clean)
+summary(ckd_clean)
+str(ckd_clean)
+head(ckd_clean)
+colSums(is.na(ckd_clean))
+boxplot(ckd_clean$age,
+main = "Boxplot of Age",
+ylab = "Age")
+boxplot(ckd_clean$bp,
+main = "Boxplot of Blood Pressure",
+ylab = "Blood Pressure")
+boxplot(ckd_clean$bgr,
+main = "Boxplot of Blood Glucose",
+ylab = "Blood Glucose")
+boxplot(ckd_clean$bu,
+main = "Boxplot of Blood Urea",
+ylab = "Blood Urea")
+boxplot(ckd_clean$sc,
+main = "Boxplot of Serum Creatinine",
+ylab = "Serum Creatinine")
+boxplot(ckd_clean$hemo,
+main = "Boxplot of Hemoglobin",
+ylab = "Hemoglobin")
+count_outliers <- function(x) {
+Q1 <- quantile(x, 0.25, na.rm = TRUE)
+Q3 <- quantile(x, 0.75, na.rm = TRUE)
+IQR_value <- Q3 - Q1
+lower <- Q1 - 1.5 * IQR_value
+upper <- Q3 + 1.5 * IQR_value
+sum(x < lower | x > upper, na.rm = TRUE)
+}
+outlier_counts <- sapply(
+c("age", "bp", "bgr", "bu", "sc",
+"sod", "pot", "hemo", "pcv",
+"wbcc", "rbcc"),
+function(x) count_outliers(ckd_clean[[x]])
+)
+outlier_counts
+outlier_table <- data.frame(
+Variable = names(outlier_counts),
+Outlier_Count = as.numeric(outlier_counts)
+)
+outlier_table$Outlier_Percent <- round(
+outlier_table$Outlier_Count /
+nrow(ckd_clean) * 100,
+2
+)
+outlier_table
+# Create a separate normalized dataset
+ckd_normalized <- ckd_clean
+# Numerical variables
+numeric_vars <- c(
+"age", "bp", "sg", "al", "su",
+"bgr", "bu", "sc", "sod", "pot",
+"hemo", "pcv", "wbcc", "rbcc"
+)
+# Min-Max normalization
+ckd_normalized[numeric_vars] <- lapply(
+ckd_normalized[numeric_vars],
+function(x) {
+(x - min(x, na.rm = TRUE)) /
+(max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
+)
+summary(ckd_normalized[numeric_vars])
+sapply(
+ckd_normalized[numeric_vars],
+function(x) c(
+Minimum = min(x),
+Maximum = max(x)
+)
+)
+summary(ckd_normalized[numeric_vars])
+sapply(
+ckd_normalized[numeric_vars],
+function(x) c(
+Minimum = min(x),
+Maximum = max(x)
+)
+)
+summary(ckd_clean[, c("age", "bp", "bgr", "sc", "hemo")])
+summary(ckd_normalized[, c("age", "bp", "bgr", "sc", "hemo")])
+ckd_normalized <- ckd_clean
+ckd_normalized[numeric_vars] <- lapply(
+ckd_normalized[numeric_vars],
+function(x) {
+(x - min(x, na.rm = TRUE)) /
+(max(x, na.rm = TRUE) - min(x, na.rm = TRUE))
+}
+)
+summary(ckd_normalized[numeric_vars])
+# Create encoded version of the cleaned dataset
+ckd_encoded <- ckd_clean
+# Create dummy variables for categorical predictors
+encoded_predictors <- model.matrix(
+~ . - class - 1,
+data = ckd_clean
+)
+# Convert to data frame
+encoded_predictors <- as.data.frame(encoded_predictors)
+# Add the original target variable
+ckd_encoded <- cbind(
+encoded_predictors,
+class = ckd_clean$class
+)
+# Check dimensions
+dim(ckd_encoded)
+str(ckd_encoded)
+head(ckd_encoded)
+dim(ckd_encoded)
+table(ckd_clean$class)
+prop.table(table(ckd_clean$class)) * 100
+barplot(
+table(ckd_clean$class),
+main = "Distribution of CKD Classification",
+xlab = "Classification",
+ylab = "Number of Patients"
+)
+hist(
+ckd_clean$age,
+main = "Distribution of Patient Age",
+xlab = "Age",
+ylab = "Frequency",
+breaks = 20
+)
+hist(
+ckd_clean$bp,
+main = "Distribution of Blood Pressure",
+xlab = "Blood Pressure",
+ylab = "Frequency",
+breaks = 15
+)
+boxplot(
+bp ~ class,
+data = ckd_clean,
+main = "Blood Pressure by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Blood Pressure"
+)
+boxplot(
+bgr ~ class,
+data = ckd_clean,
+main = "Blood Glucose by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Blood Glucose"
+)
+boxplot(
+sc ~ class,
+data = ckd_clean,
+main = "Serum Creatinine by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Serum Creatinine"
+)
+boxplot(
+hemo ~ class,
+data = ckd_clean,
+main = "Hemoglobin by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Hemoglobin"
+)
+summary(ckd_clean)
+summary(
+ckd_clean[, c(
+"age", "bp", "bgr", "bu",
+"sc", "sod", "pot", "hemo",
+"pcv", "wbcc", "rbcc"
+)]
+)
+cor_matrix <- cor(
+ckd_clean[numeric_vars],
+use = "complete.obs"
+)
+round(cor_matrix, 2)
+heatmap(
+cor_matrix,
+main = "Correlation Matrix of Numerical Variables"
+)
+ckd_encoded <- ckd_clean
+encoded_predictors <- model.matrix(
+~ . - class - 1,
+data = ckd_clean
+)
+encoded_predictors <- as.data.frame(encoded_predictors)
+ckd_encoded <- cbind(
+encoded_predictors,
+class = ckd_clean$class
+)
+dim(ckd_encoded)
+str(ckd_encoded)
+table(ckd_clean$class)
+prop.table(table(ckd_clean$class)) * 100
+barplot(
+table(ckd_clean$class),
+main = "Distribution of CKD Classification",
+xlab = "CKD Classification",
+ylab = "Number of Patients"
+)
+barplot(
+table(ckd_clean$class),
+main = "Distribution of CKD Classification",
+xlab = "CKD Classification",
+ylab = "Number of Patients"
+)
+hist(
+ckd_clean$age,
+main = "Distribution of Patient Age",
+xlab = "Age",
+ylab = "Frequency",
+breaks = 20
+)
+hist(
+ckd_clean$bp,
+main = "Distribution of Blood Pressure",
+xlab = "Blood Pressure",
+ylab = "Frequency",
+breaks = 15
+)
+boxplot(
+bp ~ class,
+data = ckd_clean,
+main = "Blood Pressure by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Blood Pressure"
+)
+boxplot(
+bgr ~ class,
+data = ckd_clean,
+main = "Blood Glucose by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Blood Glucose"
+)
+boxplot(
+sc ~ class,
+data = ckd_clean,
+main = "Serum Creatinine by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Serum Creatinine"
+)
+boxplot(
+hemo ~ class,
+data = ckd_clean,
+main = "Hemoglobin by CKD Classification",
+xlab = "CKD Classification",
+ylab = "Hemoglobin"
+)
+summary(ckd_clean)
+summary(
+ckd_clean[, c(
+"age", "bp", "bgr", "bu",
+"sc", "sod", "pot", "hemo",
+"pcv", "wbcc", "rbcc"
+)]
+)
+aggregate(
+cbind(age, bp, bgr, bu, sc, sod, pot, hemo, pcv, wbcc, rbcc)
+~ class,
+data = ckd_clean,
+FUN = mean
+)
+aggregate(
+cbind(age, bp, bgr, bu, sc, sod, pot, hemo, pcv, wbcc, rbcc)
+~ class,
+data = ckd_clean,
+FUN = median
+)
+table(ckd_clean$htn, ckd_clean$class)
+prop.table(
+table(ckd_clean$htn, ckd_clean$class),
+margin = 2
+) * 100
+prop.table(
+table(ckd_clean$dm, ckd_clean$class),
+margin = 2
+) * 100
+prop.table(
+table(ckd_clean$appet, ckd_clean$class),
+margin = 2
+) * 100
+cor_pairs <- as.data.frame(as.table(cor_matrix))
+cor_pairs <- cor_pairs[
+cor_pairs$Var1 != cor_pairs$Var2,
+]
+cor_pairs <- cor_pairs[
+abs(cor_pairs$Freq) >= 0.5,
+]
+cor_pairs
+savehistory("~/R/Week1_R_Project/R SCRPT.Rhistory")
+
